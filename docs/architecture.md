@@ -23,17 +23,6 @@ Pipeline experts are defined in `mope/pipeline.py` as ordered lists of atomic st
 - **Planner → Search**: planner-guided single-pass search.
 - **MultiSearch → Compare → Verify**: multi-source comparison before verifying consensus.
 
-For retrieval-ready experiments, `mope/retrieval.py` provides a lightweight
-`DocumentStore` with BM25-style scoring, an `EvidenceReader` summarizer, and a
-`build_retrieval_pipelines` helper that wires them into MoPE-compatible
-pipelines. You can load your own corpus, construct pipelines, and pass them
-directly into `MoPELayer`.
-
-When you need a full task loop (search → read → answer → fact-check), use
-`SearchQAFactCheckingSystem` and `build_task_pipelines` from
-`mope.task_engine`. The system produces grounded answers and verdicts while
-exposing pipeline traces for interpretability.
-
 Each expert returns both an answer string and a detailed trace of the intermediate reasoning steps for transparency.
 
 ## Gate strategies
@@ -54,10 +43,3 @@ In research settings, the gate can be swapped for:
 3. **Reinforcement learning (RL):** optimize a reward that balances accuracy, search cost, and factuality; adjust the gate accordingly.
 
 The functions include structured placeholders, logging hooks, and TODOs to help researchers plug in their preferred frameworks.
-
-## Integrating with nanoGPT
-`mope.nanogpt_integration` provides a `NanoGPTMoPEAdapter` that can replace the
-MLP inside a nanoGPT block. Use `attach_mope_to_nanogpt` to patch specific
-layers while keeping the rest of the model unchanged. The adapter accepts either
-PyTorch tensors (if `torch` is installed) or Python lists for lightweight
-offline experimentation.

@@ -25,12 +25,11 @@ class TransformerConfig:
 class MoPETransformer:
     """Tiny Transformer-like container that swaps MoPE layers for FFNs."""
 
-    def __init__(self, config: TransformerConfig, pipelines=None) -> None:
+    def __init__(self, config: TransformerConfig) -> None:
         self.config = config
-        self.pipelines = pipelines or PIPELINE_REGISTRY
-        expert_names = list(self.pipelines.keys())
+        expert_names = list(PIPELINE_REGISTRY.keys())
         layer_config = MoPELayerConfig(hidden_size=config.hidden_size, expert_names=expert_names)
-        self.layers: List[MoPELayer] = [MoPELayer(layer_config, pipelines=self.pipelines) for _ in range(config.num_layers)]
+        self.layers: List[MoPELayer] = [MoPELayer(layer_config) for _ in range(config.num_layers)]
 
     def encode_prompt(self, prompt: str) -> List[float]:
         seed = abs(hash(prompt)) % (2**32)

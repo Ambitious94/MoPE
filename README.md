@@ -24,46 +24,6 @@ Traditional FFNs apply a uniform nonlinear transformation to every token. MoPE t
    pytest
    ```
 3. Explore the minimal demo in `mope/model.py` to see how a `MoPETransformer` routes to different pipeline experts.
-4. Build retrieval-ready pipelines with your own corpus:
-   ```python
-   from mope import DocumentStore, MoPELayer, MoPELayerConfig, build_retrieval_pipelines
-
-   store = DocumentStore()
-   store.add_many([
-       ("wikipedia-water", "Water boils at 100C at sea level."),
-       ("physics", "Boiling point decreases with altitude."),
-   ])
-
-   pipelines = build_retrieval_pipelines(store)
-   config = MoPELayerConfig(hidden_size=8, expert_names=list(pipelines.keys()))
-   layer = MoPELayer(config, pipelines=pipelines)
-   result = layer.forward([0.0] * 8, prompt="When does water boil?")
-   print(result["trace"])  # includes retrieval + reader evidence
-   ```
-
-5. Run a task-level search/QA/fact-checking flow and connect it to MoPE:
-   ```python
-   from mope import (
-       DocumentStore,
-       MoPELayer,
-       MoPELayerConfig,
-       SearchQAFactCheckingSystem,
-       build_task_pipelines,
-   )
-
-   store = DocumentStore()
-   store.add_many([
-       ("wiki-boiling", "Water boils at 100 degrees Celsius at sea level."),
-       ("wiki-altitude", "At high altitude, the boiling point drops."),
-   ])
-
-   system = SearchQAFactCheckingSystem(store)
-   pipelines = build_task_pipelines(system)
-   config = MoPELayerConfig(hidden_size=8, expert_names=list(pipelines.keys()))
-   layer = MoPELayer(config, pipelines=pipelines)
-   result = layer.forward([0.0] * config.hidden_size, prompt="When does water boil?")
-   print(result["trace"])  # retrieval + reading + verdict
-   ```
 
 ## Key ideas
 - **Pipelines as experts:** a pipeline is an ordered chain of atomic reasoning tools (planner, search, reader, verifier). Different chains capture different search/QA strategies.
@@ -72,31 +32,3 @@ Traditional FFNs apply a uniform nonlinear transformation to every token. MoPE t
 - **Training curriculum:** start with FFN distillation for stability, then supervised fine-tuning on search data, and finally RL to trade off accuracy, cost, and factuality.
 
 See `docs/architecture.md` for a deeper dive.
-
-## nanoGPT integration
-Use the `NanoGPTMoPEAdapter` to replace the MLP block of selected nanoGPT layers.
-```python
-from mope import (
-    DocumentStore,
-    SearchQAFactCheckingSystem,
-    build_task_pipelines,
-    attach_mope_to_nanogpt,
-    make_mock_nanogpt,
-)
-
-mock_model, hidden_size = make_mock_nanogpt(num_layers=1, hidden_size=12)
-store = DocumentStore()
-store.add("wiki-boiling", "Water boils at 100 C at sea level.")
-system = SearchQAFactCheckingSystem(store)
-pipelines = build_task_pipelines(system)
-attach_mope_to_nanogpt(
-    mock_model,
-    hidden_size=hidden_size,
-    layer_indices=[0],
-    pipelines=pipelines,
-    prompt_provider=lambda: "When does water boil?",
-)
-
-# during generation, call the patched mlp with your hidden state tensor or list
-hidden = mock_model.transformer.h[0].mlp([0.0] * hidden_size)
-```

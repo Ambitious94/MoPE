@@ -1,10 +1,4 @@
-"""Pipeline experts and atomic reasoning tools used by the MoPE layer.
-
-The default registry contains purely symbolic steps. For retrieval-ready
-pipelines, see :func:`mope.retrieval.build_retrieval_pipelines` which wires
-these step interfaces to a concrete :class:`~mope.retrieval.DocumentStore` and
-a lightweight reader.
-"""
+"""Pipeline experts and atomic reasoning tools used by the MoPE layer."""
 
 from __future__ import annotations
 
